@@ -13,18 +13,23 @@ import (
 
 type CreateRESTClientOption func(*rest.Config)
 
+// APIPath set a sub-path that points to
+// an API root (optional, default '/apis')
 func APIPath(apiPath string) CreateRESTClientOption {
 	return func(rc *rest.Config) {
 		rc.APIPath = apiPath
 	}
 }
 
+// GroupVersion is the API version to talk to (required)
 func GroupVersion(gv schema.GroupVersion) CreateRESTClientOption {
 	return func(rc *rest.Config) {
 		rc.GroupVersion = &gv
 	}
 }
 
+// Verbose if true adds a http wire dump
+// transport middleware (optional)
 func Verbose(verbose bool) CreateRESTClientOption {
 	return func(rc *rest.Config) {
 		if !verbose {
@@ -37,12 +42,16 @@ func Verbose(verbose bool) CreateRESTClientOption {
 	}
 }
 
+// UserAgent specifies the caller of this
+// request (optional)
 func UserAgent(ua string) CreateRESTClientOption {
 	return func(rc *rest.Config) {
 		rc.UserAgent = ua
 	}
 }
 
+// CreateRESTClient returns a rest.RESTClient that satisfies
+// the requested options on a rest.Config
 func CreateRESTClient(rc *rest.Config, opts ...CreateRESTClientOption) (*rest.RESTClient, error) {
 	config := *rc
 	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
