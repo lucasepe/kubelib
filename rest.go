@@ -11,31 +11,58 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+type CreateRESTClientOption func(*rest.Config)
+
+func APIPath(apiPath string) CreateRESTClientOption {
+	return func(rc *rest.Config) {
+		rc.APIPath = apiPath
+	}
+}
+
+func GroupVersion(gv schema.GroupVersion) CreateRESTClientOption {
+	return func(rc *rest.Config) {
+		rc.GroupVersion = &gv
+	}
+}
+
+func Verbose(verbose bool) CreateRESTClientOption {
+	return func(rc *rest.Config) {
+		if !verbose {
+			return
+		}
+
+		rc.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+			return &wireTracer{RoundTripper: rt}
+		})
+	}
+}
+
+func UserAgent(ua string) CreateRESTClientOption {
+	return func(rc *rest.Config) {
+		rc.UserAgent = ua
+	}
+}
+
 type CreateRESTClientOptions struct {
 	APIPath   string
 	UserAgent string
 	Verbose   bool
 }
 
-func CreateRESTClient(rc *rest.Config, gv schema.GroupVersion, opts CreateRESTClientOptions) (*rest.RESTClient, error) {
+func CreateRESTClient(rc *rest.Config, opts ...CreateRESTClientOption) (*rest.RESTClient, error) {
 	config := *rc
-	config.GroupVersion = &gv
 	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
 
-	config.APIPath = opts.APIPath
+	for _, fn := range opts {
+		fn(&config)
+	}
+
 	if len(config.APIPath) == 0 {
 		config.APIPath = "/apis"
 	}
 
-	config.UserAgent = opts.UserAgent
 	if len(config.UserAgent) == 0 {
 		config.UserAgent = fmt.Sprintf("kubelib (%s/%s)", gruntime.GOOS, gruntime.GOARCH)
-	}
-
-	if opts.Verbose {
-		config.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
-			return &wireTracer{RoundTripper: rt}
-		}
 	}
 
 	return rest.RESTClientFor(&config)
