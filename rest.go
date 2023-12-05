@@ -43,12 +43,6 @@ func UserAgent(ua string) CreateRESTClientOption {
 	}
 }
 
-type CreateRESTClientOptions struct {
-	APIPath   string
-	UserAgent string
-	Verbose   bool
-}
-
 func CreateRESTClient(rc *rest.Config, opts ...CreateRESTClientOption) (*rest.RESTClient, error) {
 	config := *rc
 	config.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
